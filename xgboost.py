@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from xgboost import XGBClassifier
 # CSV Dosyası Yükleme
-filename = r'C:\Users\BUŞRA\Desktop\all\sonuc\counter\cmix.csv'
+filename = r'C:\Users\...\cmix.csv'
 
 
 
