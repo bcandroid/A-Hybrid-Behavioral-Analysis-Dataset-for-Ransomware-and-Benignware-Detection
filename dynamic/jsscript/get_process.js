@@ -1,3 +1,4 @@
+//soruce: https://github.com/fr0gger/MalwareMuncher
 var pGetProcAddress = Module.findExportByName(null, "GetProcAddress");
 Interceptor.attach(pGetProcAddress, {
     onEnter: function(args) {
