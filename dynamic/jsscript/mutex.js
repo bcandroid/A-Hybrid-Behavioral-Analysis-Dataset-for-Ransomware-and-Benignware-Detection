@@ -1,3 +1,4 @@
+// Source: https://github.com/fr0gger/MalwareMuncher
 function instrumentCreateMutex(opts) {
 	if(opts.ex) {
 		var pCreateMutex = opts.unicode ? Module.findExportByName(null, "CreateMutexExW")
