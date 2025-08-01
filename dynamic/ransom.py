@@ -81,7 +81,7 @@ def load_frida(sample, js):
         script.load()
         frida.resume(process_name)
 
-        time.sleep(15)
+        time.sleep(3)
         force_kill(process_name)
         frida.kill(process_name)
 
