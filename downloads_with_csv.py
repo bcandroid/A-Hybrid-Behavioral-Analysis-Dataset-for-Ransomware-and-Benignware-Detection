@@ -1,75 +1,73 @@
-import requests
-import json
-import os
+#!/usr/bin/env python3
+import os, re, csv, json, requests
 
-TAG_FILTER = "exe"
-DOWNLOAD_DIR = "downloads"
-INFO_LOG = "malware_list.jsonl"
+CSV_PATH      = "/path/to/your/list.csv"  
+DOWNLOAD_DIR  = "downloads"
+INFO_LOG      = "malware_list.jsonl"
+TAG_FILTER    = "exe"                     
+LIMIT         = None                      
 
-def fetch_ransomware_samples(limit=1000):
-    print("[*] Fetching sample metadata from abuse.ch...")
-    response = requests.post('https://mb-api.abuse.ch/api/v1/', data={
-        'query': 'get_taginfo',
-        'tag': 'ransomware',
-        'limit': str(limit)
-    })
+MB_API = "https://mb-api.abuse.ch/api/v1/"
+SHA256_RE = re.compile(r"\b[a-fA-F0-9]{64}\b")
 
-    if response.status_code != 200:
-        print(f"[!] Error fetching metadata: {response.status_code}")
-        return []
-
-    try:
-        data = response.json()
-        return data.get('data', [])
-    except Exception as e:
-        print(f"[!] Failed to parse JSON: {e}")
-        return []
+def extract_sha256(text):
+    if not text: return None
+    m = SHA256_RE.search(str(text))
+    return m.group(0).lower() if m else None
 
 def download_sample(sha256_hash, save_path):
     try:
-        response = requests.post('https://mb-api.abuse.ch/api/v1/', data={
-            'query': 'get_file',
-            'sha256_hash': sha256_hash
-        }, timeout=30, stream=True)
-
-        if response.status_code == 200 and b'file_not_found' not in response.content:
-            with open(save_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-            print(f"[+] Downloaded: {save_path}")
-        else:
-            print(f"[!] File not found or error: {sha256_hash}")
-
+        with requests.post(MB_API, data={"query":"get_file","sha256_hash":sha256_hash},
+                           timeout=30, stream=True) as r:
+            if r.status_code == 200 and b'file_not_found' not in r.content[:200]:
+                with open(save_path, "wb") as f:
+                    for chunk in r.iter_content(8192):
+                        if chunk: f.write(chunk)
+                print(f"[+] Downloaded: {save_path}")
+                return True
+            else:
+                print(f"[!] Not found or error: {sha256_hash}")
+                return False
     except Exception as e:
         print(f"[!] Error downloading {sha256_hash}: {e}")
+        return False
+
+def fetch_tags(sha256_hash):
+    try:
+        r = requests.post(MB_API, data={"query":"get_info","hash":sha256_hash}, timeout=20)
+        if r.status_code != 200: return []
+        data = r.json().get("data", [])
+        if not data: return []
+        return data[0].get("tags", []) or []
+    except Exception:
+        return []
 
 def main():
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    written = 0
 
-    samples = fetch_ransomware_samples()
+    with open(INFO_LOG, "w", encoding="utf-8") as logf, open(CSV_PATH, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for i, row in enumerate(reader, start=1):
+            if LIMIT is not None and i > LIMIT: break
 
-    with open(INFO_LOG, 'w') as log_file:
-        for sample in samples:
-            sha256_hash = sample.get('sha256_hash')
-            file_type = sample.get('file_type', '')
-            tags = sample.get('tags', [])
-
-            if not sha256_hash:
+            sha = extract_sha256(row.get("file_name"))
+            if not sha:
+                print(f"[-] Satır {i}: SHA256 bulunamadı, atlandı.")
                 continue
 
-            if TAG_FILTER in tags or TAG_FILTER == file_type:
-                # Log JSONL entry
-                entry = {
-                    'sha256_hash': sha256_hash,
-                    'tags': tags
-                }
-                log_file.write(json.dumps(entry) + "\n")
+            tags = fetch_tags(sha)
 
-                # Download sample
-                save_path = os.path.join(DOWNLOAD_DIR, f"{sha256_hash}.zip")
-                print(f"[*] Downloading file for hash: {sha256_hash}")
-                download_sample(sha256_hash, save_path)
+            entry = {"sha256_hash": sha, "tags": tags}
+            logf.write(json.dumps(entry) + "\n")
+
+            save_path = os.path.join(DOWNLOAD_DIR, f"{sha}.zip")
+            if os.path.exists(save_path):
+                print(f"[=] Zaten var: {save_path}")
+                continue
+
+            print(f"[*] İndiriliyor: {sha}  (tags: {tags})")
+            download_sample(sha, save_path)
 
 if __name__ == "__main__":
     main()
