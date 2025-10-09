@@ -24,8 +24,10 @@ Portions of the dynamic analysis workflow were adapted with reference to the pub
 **Researchers wishing to utilize the RansomTrack dataset are kindly requested to cite the following reference:**
 
 **B. Çalışkan, İ. Gülataş, H. H. Kilinc, and A. H. Zaim, “The Recent Trends in Ransomware Detection and Behaviour Analysis,” in _Proc. 17th Int. Conf. Security of Information and Networks (SIN)_, Sydney, Australia, Dec. 2024, doi: [10.1109/SIN63213.2024.10871663](https://doi.org/10.1109/SIN63213.2024.10871663)**
+
 **AND**
-**B. Çalışkan, İ. Gülataş, H. H. Kilinc, and A. H. Zaim, “RansomTrack: A Hybrid Behavioral Analysis Framework for Ransomware Detection,” SSRN Electronic Journal, 2025, doi: 10.2139/ssrn.5579869
+
+**B. Çalışkan, İ. Gülataş, H. H. Kilinc, and A. H. Zaim, “RansomTrack: A Hybrid Behavioral Analysis Framework for Ransomware Detection,” SSRN Electronic Journal, 2025, doi: 10.2139/ssrn.5579869 (https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5579869)
 .**
 
 
